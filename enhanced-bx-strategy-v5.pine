@@ -1,0 +1,47 @@
+//@version=5
+strategy("QQQ_Zen", overlay=true,  
+ max_labels_count=500, initial_capital=1000, default_qty_type=strategy.percent_of_equity, default_qty_value = 100,process_orders_on_close=true)      // This ensures calculations are updated when orders are filled
+
+
+
+
+// Backtest Timeframe Inputs // 
+startDate = input.int(title="Start Date", defval=1, minval=1, maxval=31)
+startMonth = input.int(title="Start Month", defval=1, minval=1, maxval=12)
+startYear = input.int(title="Start Year", defval=2024, minval=1950, maxval=2100)
+endDate = input.int(title="End Date", defval=1, minval=1, maxval=31)
+endMonth = input.int(title="End Month", defval=1, minval=1, maxval=12)
+endYear = input.int(title="End Year", defval=2099, minval=1950, maxval=2100)
+InDateRange = (time >= timestamp(syminfo.timezone, startYear, startMonth, startDate, 0, 0)) and (time < timestamp(syminfo.timezone, endYear, endMonth, endDate, 0, 0))
+
+short_l1 = input(5 , title="Short - L1")
+short_l2 = input(20, title="Short - L2")
+short_l3 = input(5, title="Short - L3")
+
+shortTermXtrender = ta.rsi(ta.ema(close, short_l1) - ta.ema(close, short_l2), short_l3 ) - input(50, title="shortTermXtrender")
+
+
+////////////////////////////////////////////////////////////
+// RSI
+////////////////////////////////////////////////////////////
+
+l_rsi = ta.rsi(close, input(14, "RSI Length"))
+l_rsi_sma7 = ta.sma(l_rsi, input(7, "SMA Length"))
+
+// Add to variables section
+rsiLength = input.int(14, "RSI Length")
+rsiThreshold = input.float(50, "RSI Entry Threshold")
+rsi = ta.rsi(close, rsiLength)
+
+
+
+
+
+if (InDateRange and (shortTermXtrender >= 0)  and rsi > rsiThreshold    and strategy.position_size == 0  ) 
+   
+    strategy.entry("Long", strategy.long, comment="Entry")
+
+if (InDateRange and strategy.position_size > 0 and shortTermXtrender <= 0  and l_rsi_sma7 < l_rsi_sma7[1] ) 
+
+    
+    strategy.close("Long", comment="Exit")
